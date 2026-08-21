@@ -1,0 +1,12 @@
+{
+  "name": "react-fastify-turbo",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0"
+  },
+  "packageManager": "pnpm@11.21.0"
+}
