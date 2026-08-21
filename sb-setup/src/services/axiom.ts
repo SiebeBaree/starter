@@ -29,7 +29,9 @@ export async function ensureIngestToken(
     dataset: string,
     name: string,
 ): Promise<string> {
-    const existing = await api<{ id: string; name: string }[]>(SERVICE, `${BASE}/tokens`, { headers: headers(token, orgId) });
+    const existing = await api<{ id: string; name: string }[]>(SERVICE, `${BASE}/tokens`, {
+        headers: headers(token, orgId),
+    });
     const stale = existing.find((t) => t.name === name);
     if (stale) {
         await api(SERVICE, `${BASE}/tokens/${stale.id}`, { method: "DELETE", headers: headers(token, orgId) });

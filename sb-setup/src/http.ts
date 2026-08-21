@@ -17,7 +17,12 @@ interface RequestOptions {
 
 export async function api<T>(service: string, url: string, options: RequestOptions): Promise<T>;
 export async function api<T>(service: string, url: string, options: RequestOptions, allow404: true): Promise<T | null>;
-export async function api<T>(service: string, url: string, options: RequestOptions, allow404?: boolean): Promise<T | null> {
+export async function api<T>(
+    service: string,
+    url: string,
+    options: RequestOptions,
+    allow404?: boolean,
+): Promise<T | null> {
     const response = await fetch(url, {
         method: options.method ?? "GET",
         headers: {

@@ -12,7 +12,9 @@ function url(path: string, teamId: string | null, params: Record<string, string>
 }
 
 export function user(token: string): Promise<{ username: string }> {
-    return api<{ user: { username: string } }>(SERVICE, `${BASE}/v2/user`, { headers: bearer(token) }).then((r) => r.user);
+    return api<{ user: { username: string } }>(SERVICE, `${BASE}/v2/user`, { headers: bearer(token) }).then(
+        (r) => r.user,
+    );
 }
 
 export function teams(token: string): Promise<{ id: string; name: string }[]> {
@@ -34,7 +36,12 @@ export interface Project {
 }
 
 export async function ensureProject(token: string, teamId: string | null, spec: ProjectSpec): Promise<Project> {
-    const existing = await api<Project>(SERVICE, url(`/v9/projects/${spec.name}`, teamId), { headers: bearer(token) }, true);
+    const existing = await api<Project>(
+        SERVICE,
+        url(`/v9/projects/${spec.name}`, teamId),
+        { headers: bearer(token) },
+        true,
+    );
     if (existing) return existing;
     const body = {
         name: spec.name,
@@ -44,7 +51,11 @@ export async function ensureProject(token: string, teamId: string | null, spec: 
         gitRepository: { type: "github", repo: spec.repo },
     };
     try {
-        return await api<Project>(SERVICE, url("/v10/projects", teamId), { method: "POST", headers: bearer(token), body });
+        return await api<Project>(SERVICE, url("/v10/projects", teamId), {
+            method: "POST",
+            headers: bearer(token),
+            body,
+        });
     } catch (error) {
         // Framework slugs come and go; "Other" still builds through the package.json scripts.
         if (error instanceof ApiError && error.status === 400 && spec.framework !== null) {
@@ -64,16 +75,31 @@ export interface EnvVar {
     target?: ("production" | "preview" | "development")[];
 }
 
-export async function upsertEnv(token: string, teamId: string | null, projectId: string, vars: EnvVar[]): Promise<void> {
+export async function upsertEnv(
+    token: string,
+    teamId: string | null,
+    projectId: string,
+    vars: EnvVar[],
+): Promise<void> {
     if (vars.length === 0) return;
     await api(SERVICE, url(`/v10/projects/${projectId}/env`, teamId, { upsert: "true" }), {
         method: "POST",
         headers: bearer(token),
-        body: vars.map((v) => ({ key: v.key, value: v.value, type: "encrypted", target: v.target ?? ["production", "preview"] })),
+        body: vars.map((v) => ({
+            key: v.key,
+            value: v.value,
+            type: "encrypted",
+            target: v.target ?? ["production", "preview"],
+        })),
     });
 }
 
-export async function deployFromGit(token: string, teamId: string | null, projectName: string, repoId: number): Promise<string> {
+export async function deployFromGit(
+    token: string,
+    teamId: string | null,
+    projectName: string,
+    repoId: number,
+): Promise<string> {
     const deployment = await api<{ url: string }>(SERVICE, url("/v13/deployments", teamId), {
         method: "POST",
         headers: bearer(token),

@@ -16,9 +16,13 @@ interface Project {
 }
 
 export async function ensureProject(token: string, orgId: string, name: string): Promise<{ apiKey: string }> {
-    const list = await api<{ results: Project[] }>(SERVICE, `${POSTHOG_HOST}/api/organizations/${orgId}/projects/?limit=500`, {
-        headers: bearer(token),
-    });
+    const list = await api<{ results: Project[] }>(
+        SERVICE,
+        `${POSTHOG_HOST}/api/organizations/${orgId}/projects/?limit=500`,
+        {
+            headers: bearer(token),
+        },
+    );
     const existing = list.results.find((project) => project.name === name);
     if (existing?.api_token) return { apiKey: existing.api_token };
     if (existing) {

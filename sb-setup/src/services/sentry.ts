@@ -13,9 +13,13 @@ export interface SentryOrg {
 }
 
 export function orgs(token: string): Promise<SentryOrg[]> {
-    return api<{ slug: string; name: string; links?: { regionUrl?: string } }[]>(SERVICE, `${CONTROL_BASE}/organizations/`, {
-        headers: bearer(token),
-    }).then((list) =>
+    return api<{ slug: string; name: string; links?: { regionUrl?: string } }[]>(
+        SERVICE,
+        `${CONTROL_BASE}/organizations/`,
+        {
+            headers: bearer(token),
+        },
+    ).then((list) =>
         list.map((org) => ({
             slug: org.slug,
             name: org.name,
@@ -39,7 +43,12 @@ export async function ensureProject(
     platform: string,
 ): Promise<{ dsn: string }> {
     const base = `${regionUrl}/api/0`;
-    const existing = await api<{ slug: string }>(SERVICE, `${base}/projects/${org}/${slug}/`, { headers: bearer(token) }, true);
+    const existing = await api<{ slug: string }>(
+        SERVICE,
+        `${base}/projects/${org}/${slug}/`,
+        { headers: bearer(token) },
+        true,
+    );
     if (!existing) {
         await api(SERVICE, `${base}/teams/${org}/${team}/projects/`, {
             method: "POST",

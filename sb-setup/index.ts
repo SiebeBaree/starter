@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import * as p from "@clack/prompts";
+
 import { loadCredentials, loadDefaults, saveDefaults } from "./src/config";
 import { SERVICES, TEMPLATES } from "./src/constants";
 import { assertTokens, runDoctor } from "./src/doctor";
@@ -72,6 +73,8 @@ main().catch((error: unknown) => {
     } else {
         p.log.error(error instanceof Error ? error.message : String(error));
     }
-    p.log.warn("Nothing outside the target directory was touched. Re-run with the same answers to resume, finished resources are reused.");
+    p.log.warn(
+        "Nothing outside the target directory was touched. Re-run with the same answers to resume, finished resources are reused.",
+    );
     process.exit(1);
 });

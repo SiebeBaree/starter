@@ -49,13 +49,18 @@ async function connectionUri(token: string, projectId: string): Promise<string> 
             `${BASE}/projects/${projectId}/branches/${branch.id}/roles`,
             { headers: bearer(token) },
         ),
-        api<{ databases: { name: string }[] }>(SERVICE, `${BASE}/projects/${projectId}/branches/${branch.id}/databases`, {
-            headers: bearer(token),
-        }),
+        api<{ databases: { name: string }[] }>(
+            SERVICE,
+            `${BASE}/projects/${projectId}/branches/${branch.id}/databases`,
+            {
+                headers: bearer(token),
+            },
+        ),
     ]);
     const role = roles.find((r) => !r.protected) ?? roles[0];
     const database = databases[0];
-    if (!role || !database) throw new ApiError(SERVICE, 200, `project ${projectId} default branch has no role or database`);
+    if (!role || !database)
+        throw new ApiError(SERVICE, 200, `project ${projectId} default branch has no role or database`);
     const uriQuery = new URLSearchParams({ role_name: role.name, database_name: database.name, pooled: "true" });
     const { uri } = await api<{ uri: string }>(SERVICE, `${BASE}/projects/${projectId}/connection_uri?${uriQuery}`, {
         headers: bearer(token),

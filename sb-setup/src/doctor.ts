@@ -1,5 +1,6 @@
 import * as p from "@clack/prompts";
 import { $ } from "bun";
+
 import { CREDENTIALS_PATH, type Credentials } from "./config";
 import { POSTHOG_HOST, TOKEN_HELP, TOKEN_KEYS, type TokenKey } from "./constants";
 import { api, ApiError, basic, bearer } from "./http";
@@ -7,7 +8,9 @@ import { api, ApiError, basic, bearer } from "./http";
 // One cheap authenticated GET per service proves the token actually works, not just that it exists.
 const PROBES: Record<TokenKey, (token: string) => Promise<unknown>> = {
     github: (t) =>
-        api("GitHub", "https://api.github.com/user", { headers: { ...bearer(t), Accept: "application/vnd.github+json" } }),
+        api("GitHub", "https://api.github.com/user", {
+            headers: { ...bearer(t), Accept: "application/vnd.github+json" },
+        }),
     vercel: (t) => api("Vercel", "https://api.vercel.com/v2/user", { headers: bearer(t) }),
     neon: (t) => api("Neon", "https://console.neon.tech/api/v2/users/me", { headers: bearer(t) }),
     upstash: (t) => api("Upstash", "https://api.upstash.com/v2/redis/databases", { headers: basic(t) }),
@@ -26,14 +29,16 @@ const PROBES: Record<TokenKey, (token: string) => Promise<unknown>> = {
 export type DoctorReport = Record<TokenKey, { ok: boolean; detail: string }>;
 
 export async function runDoctor(creds: Credentials): Promise<DoctorReport> {
-    for (const binary of ["git", "pnpm"]) {
-        try {
-            await $`${{ raw: binary }} --version`.quiet();
-        } catch {
-            p.log.error(`${binary} is not installed or not on PATH.`);
-            process.exit(1);
-        }
-    }
+    await Promise.all(
+        ["git", "pnpm"].map(async (binary) => {
+            try {
+                await $`${{ raw: binary }} --version`.quiet();
+            } catch {
+                p.log.error(`${binary} is not installed or not on PATH.`);
+                process.exit(1);
+            }
+        }),
+    );
 
     const spinner = p.spinner();
     spinner.start("Checking service tokens");
@@ -80,7 +85,9 @@ export function assertTokens(needed: TokenKey[], report: DoctorReport): void {
         const help = TOKEN_HELP[key];
         return `${help.label}: ${report[key].detail}, create one at ${help.createUrl}${help.note ? ` (${help.note})` : ""}`;
     });
-    p.log.error(`Tokens required for the selected services are not usable in ${CREDENTIALS_PATH}:\n${lines.join("\n")}`);
+    p.log.error(
+        `Tokens required for the selected services are not usable in ${CREDENTIALS_PATH}:\n${lines.join("\n")}`,
+    );
     p.outro("Add the tokens and re-run.");
     process.exit(1);
 }

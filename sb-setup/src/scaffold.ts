@@ -1,6 +1,8 @@
 import { cpSync, existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
+
 import { $ } from "bun";
+
 import type { ProjectAnswers } from "./prompts/project";
 
 // Only touches the target directory and every step is safe to re-run after a failure.

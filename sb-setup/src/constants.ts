@@ -32,7 +32,7 @@ export type TokenKey = (typeof TOKEN_KEYS)[number];
 
 // Everything lives in the EU.
 export const NEON_REGION = "aws-eu-central-1";
-export const UPSTASH_PRIMARY_REGION = "eu-west-1";
+export const UPSTASH_PRIMARY_REGION = "eu-central-1";
 export const VERCEL_FUNCTION_REGION = "fra1";
 export const POSTHOG_HOST = "https://eu.posthog.com";
 

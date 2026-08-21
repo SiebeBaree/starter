@@ -17,10 +17,18 @@ export async function ensureDatabase(token: string, name: string): Promise<{ res
     database ??= await api<Database>(SERVICE, `${BASE}/redis/database`, {
         method: "POST",
         headers: basic(token),
-        body: { database_name: name, region: "global", platform: "aws", primary_region: UPSTASH_PRIMARY_REGION, tls: true },
+        body: {
+            database_name: name,
+            region: "global",
+            platform: "aws",
+            primary_region: UPSTASH_PRIMARY_REGION,
+            tls: true,
+        },
     });
     // The list response omits credentials, the details response carries rest_token.
-    const details = await api<Database>(SERVICE, `${BASE}/redis/database/${database.database_id}`, { headers: basic(token) });
+    const details = await api<Database>(SERVICE, `${BASE}/redis/database/${database.database_id}`, {
+        headers: basic(token),
+    });
     const restToken = details.rest_token ?? database.rest_token;
     if (!restToken) throw new ApiError(SERVICE, 200, `database ${name} details did not include a rest_token field`);
     const host = details.endpoint.includes(".") ? details.endpoint : `${details.endpoint}.upstash.io`;

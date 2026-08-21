@@ -1,4 +1,5 @@
 import * as p from "@clack/prompts";
+
 import type { Defaults } from "../config";
 import { SERVICES, type ServiceKey } from "../constants";
 import { must } from "./helpers";

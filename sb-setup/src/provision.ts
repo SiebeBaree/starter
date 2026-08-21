@@ -1,6 +1,8 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
+
 import { $ } from "bun";
+
 import { requireToken, type Credentials } from "./config";
 import { TEMPLATES, type ServiceKey } from "./constants";
 import type { Destinations } from "./prompts/destinations";
@@ -150,7 +152,10 @@ export async function provision(input: ProvisionInput): Promise<string[]> {
             );
         }
         if (axiomIngest) {
-            envs.push({ key: "AXIOM_TOKEN", value: axiomIngest.token }, { key: "AXIOM_DATASET", value: axiomIngest.dataset });
+            envs.push(
+                { key: "AXIOM_TOKEN", value: axiomIngest.token },
+                { key: "AXIOM_DATASET", value: axiomIngest.dataset },
+            );
         }
         if (posthogKey) envs.push({ key: "NEXT_PUBLIC_POSTHOG_KEY", value: posthogKey });
         if (appDsn) {

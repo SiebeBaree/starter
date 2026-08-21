@@ -1,6 +1,8 @@
 import { existsSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
+
 import * as p from "@clack/prompts";
+
 import type { Defaults } from "../config";
 import { TEMPLATES, type TemplateKey } from "../constants";
 import { must } from "./helpers";
@@ -51,7 +53,10 @@ export async function askProject(defaults: Defaults): Promise<ProjectAnswers> {
     const template = must(
         await p.select({
             message: "Template",
-            options: (Object.keys(TEMPLATES) as TemplateKey[]).map((key) => ({ value: key, label: TEMPLATES[key].label })),
+            options: (Object.keys(TEMPLATES) as TemplateKey[]).map((key) => ({
+                value: key,
+                label: TEMPLATES[key].label,
+            })),
             initialValue: defaults.template,
         }),
     );
