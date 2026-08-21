@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "Preserve",
+        "moduleResolution": "bundler",
+        "strict": true,
+        "noUncheckedIndexedAccess": true,
+        "verbatimModuleSyntax": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "types": ["bun"]
+    },
+    "include": ["index.ts", "src"]
+}
