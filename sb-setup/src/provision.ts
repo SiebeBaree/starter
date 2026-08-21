@@ -35,7 +35,7 @@ export async function provision(input: ProvisionInput): Promise<string[]> {
     const has = (service: ServiceKey) => services.includes(service);
     const summary: string[] = [];
 
-    await withSpinner("Scaffolding template", () => scaffold(answers, TEMPLATES[template].repo, creds.github));
+    await withSpinner("Scaffolding template", () => scaffold(answers, TEMPLATES[template].dir));
     await withSpinner("Installing dependencies", async () => {
         await $`pnpm install`.cwd(dir).quiet();
     });

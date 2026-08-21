@@ -1,12 +1,17 @@
-// Fill in OWNER once the template repos live on GitHub.
+import { join, resolve } from "node:path";
+
+// The CLI lives inside the starter repo and the templates are its siblings. Resolved from this file's real
+// location, so it works through the ~/.local/bin symlink and from any cwd.
+const STARTER_ROOT = resolve(import.meta.dir, "..", "..");
+
 export const TEMPLATES = {
     next: {
         label: "Next.js fullstack",
-        repo: "https://github.com/OWNER/template-next",
+        dir: join(STARTER_ROOT, "nextjs"),
     },
     "react-fastify": {
         label: "React + Fastify Turborepo",
-        repo: "https://github.com/OWNER/template-react-fastify",
+        dir: join(STARTER_ROOT, "react-fastify-turbo"),
     },
 } as const;
 

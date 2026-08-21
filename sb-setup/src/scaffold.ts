@@ -1,20 +1,17 @@
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { cpSync, existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { basename, join } from "node:path";
 import { $ } from "bun";
 import type { ProjectAnswers } from "./prompts/project";
 
 // Only touches the target directory and every step is safe to re-run after a failure.
-export async function scaffold(answers: ProjectAnswers, templateRepo: string, githubToken?: string): Promise<void> {
+export async function scaffold(answers: ProjectAnswers, templateDir: string): Promise<void> {
     const { dir, name, slug, apiDomain } = answers;
 
     if (!existsSync(join(dir, "package.json"))) {
         if (existsSync(dir) && readdirSync(dir).length > 0) {
             throw new Error(`${dir} has content but no package.json, refusing to scaffold over it`);
         }
-        // The token also grants read access to private template repos.
-        const cloneUrl = githubToken ? templateRepo.replace("https://", `https://x-access-token:${githubToken}@`) : templateRepo;
-        await $`git clone --depth 1 ${cloneUrl} ${dir}`.quiet();
-        await $`rm -rf ${join(dir, ".git")}`.quiet();
+        copyTemplate(templateDir, dir);
     }
 
     replacePlaceholders(dir, {
@@ -28,6 +25,32 @@ export async function scaffold(answers: ProjectAnswers, templateRepo: string, gi
         await $`git -C ${dir} add -A`.quiet();
         await $`git -C ${dir} commit -m "chore: scaffold from template"`.quiet();
     }
+}
+
+// The templates are working directories, so dependencies, build output and local env files stay behind.
+const SKIP_COPY = new Set([
+    "node_modules",
+    ".git",
+    ".DS_Store",
+    ".next",
+    ".turbo",
+    ".react-router",
+    "dist",
+    "build",
+    "coverage",
+    "test-results",
+    "playwright-report",
+]);
+
+function copyTemplate(from: string, to: string): void {
+    if (!existsSync(from)) throw new Error(`Template directory ${from} is missing`);
+    cpSync(from, to, {
+        recursive: true,
+        filter: (source) => {
+            const base = basename(source);
+            return !SKIP_COPY.has(base) && !base.startsWith(".env") && !base.endsWith(".tsbuildinfo");
+        },
+    });
 }
 
 const SKIP_DIRS = new Set(["node_modules", ".git"]);
