@@ -1,5 +1,5 @@
 {
-    "name": "react-fastify-turbo",
+    "name": "%SLUG_NAME%",
     "private": true,
     "scripts": {
         "dev": "turbo dev",
