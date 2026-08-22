@@ -31,7 +31,12 @@ export async function apiFetch<Schema extends z.ZodType>(
     const requestId = crypto.randomUUID();
     const response = await fetch(`${env.VITE_API_URL}${path}`, {
         ...init,
-        headers: { "content-type": "application/json", "x-request-id": requestId, ...init?.headers },
+        headers: {
+            // Only sent with a body: fastify rejects bodyless requests (DELETE) that claim a json content type.
+            ...(init?.body != null && { "content-type": "application/json" }),
+            "x-request-id": requestId,
+            ...init?.headers,
+        },
     });
 
     if (!response.ok) {

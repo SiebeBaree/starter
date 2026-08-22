@@ -27,7 +27,9 @@ Sentry.init({
     denyUrls: [/^chrome-extension:\/\//i, /^moz-extension:\/\//i, /^safari-extension:\/\//i],
 });
 
-if (env.VITE_POSTHOG_KEY) {
+// The window guard matters at build time: the SPA fallback prerender runs this module in Node, where posthog-js
+// resolves to a server stub without init.
+if (env.VITE_POSTHOG_KEY && typeof window !== "undefined") {
     posthog.init(env.VITE_POSTHOG_KEY, {
         api_host: "/api/pipe",
         ui_host: "https://eu.posthog.com",

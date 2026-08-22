@@ -1,3 +1,5 @@
+import type { IncomingMessage, ServerResponse } from "node:http";
+
 import type { Database } from "@repo/db";
 import type { Logger } from "@repo/logger";
 import * as Sentry from "@sentry/node";
@@ -80,4 +82,14 @@ export async function buildApp({ db, logger, corsOrigin, upstash }: AppOptions) 
     await app.register(tunnelModule);
 
     return app;
+}
+
+// Vercel's Fastify builder deploys this file as the function entrypoint and calls the default export
+// per request. The dynamic import keeps server-only side effects (Sentry, env validation, the real db)
+// out of tests, which import buildApp from here.
+export default async function handler(req: IncomingMessage, res: ServerResponse) {
+    const { getApp } = await import("./server");
+    const app = await getApp();
+    await app.ready();
+    app.server.emit("request", req, res);
 }

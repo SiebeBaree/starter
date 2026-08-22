@@ -36,7 +36,7 @@ The api's real surface is HTTP, so modules are tested by injecting requests into
 - The api is built for dependency injection: `buildApp` receives the database, logger and config, which is what lets tests swap in PGlite. Keep new cross-cutting concerns injectable the same way.
 - Fastify scoping matters: cross-cutting plugins use `fastify-plugin` to escape encapsulation and the error handler must be registered before the route modules, or child scopes keep the default handler.
 - The web is a pure SPA (`ssr: false`). No server code, no secrets; everything prefixed `VITE_` is inlined into the public bundle at build time.
-- The api bundle (tsup) inlines `@repo/*` source but externalizes real packages, so any runtime dependency used by an internal package must also appear in the api's own `dependencies` or the production bundle breaks.
+- The api has no build step. Locally tsx runs the TS source; on Vercel the Fastify preset compiles the source in place and invokes the handler default-exported from `app.ts` (the builder's entrypoint), while `listen` only runs when `server.ts` is executed directly.
 - Shared dependency versions live in the pnpm catalog; new packages that also use them should reference `catalog:` instead of pinning their own copy.
 - Production api logs are plain JSON on stdout for the Vercel Axiom drain; pretty printing exists only under `NODE_ENV=development`. Never add a log shipper to the code.
 - Builds without an environment use `SKIP_ENV_VALIDATION=1` (api) and `VITE_SKIP_ENV_VALIDATION=1` (web). Never weaken a required env var to optional to make a build pass; the fail-fast is the point.
