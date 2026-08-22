@@ -100,7 +100,9 @@ export async function deployFromGit(
     projectName: string,
     repoId: number,
 ): Promise<string> {
-    const deployment = await api<{ url: string }>(SERVICE, url("/v13/deployments", teamId), {
+    // forceNew: linking the repo at project creation auto-starts a build before env vars are set. Without it,
+    // Vercel dedupes this call onto that in-flight env-less build instead of starting a fresh one.
+    const deployment = await api<{ url: string }>(SERVICE, url("/v13/deployments", teamId, { forceNew: "1" }), {
         method: "POST",
         headers: bearer(token),
         body: { name: projectName, target: "production", gitSource: { type: "github", repoId, ref: "main" } },
