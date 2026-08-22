@@ -161,21 +161,14 @@ export async function provision(input: ProvisionInput): Promise<string[]> {
         }
         if (posthogKey) envs.push({ key: "NEXT_PUBLIC_POSTHOG_KEY", value: posthogKey });
         if (appDsn) {
-            // Source map upload at build time gets its own scoped org token instead of the personal user token,
-            // which would hand full account access to anyone who can read the project env.
-            const orgToken = await withSpinner("Creating Sentry org token", () =>
-                sentry.ensureOrgToken(
-                    requireToken(creds, "sentry"),
-                    need(dest.sentryRegionUrl, "Sentry region"),
-                    need(dest.sentryOrg, "Sentry org"),
-                    slug,
-                ),
-            );
+            // Source map upload at build time uses the stored org token (sntrys_): CI-scoped, no account access.
+            // Sentry's org-auth-tokens API is session-only, so the CLI cannot mint one; the user creates it once
+            // per org and the doctor validates it.
             envs.push(
                 { key: "NEXT_PUBLIC_SENTRY_DSN", value: appDsn },
                 { key: "SENTRY_ORG", value: need(dest.sentryOrg, "Sentry org") },
                 { key: "SENTRY_PROJECT", value: slug },
-                { key: "SENTRY_AUTH_TOKEN", value: orgToken },
+                { key: "SENTRY_AUTH_TOKEN", value: requireToken(creds, "sentryCi") },
             );
         }
         await withSpinner("Setting Vercel env vars", () => vercel.upsertEnv(vercelToken, teamId, project.id, envs));

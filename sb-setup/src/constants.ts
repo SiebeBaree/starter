@@ -27,7 +27,7 @@ export const SERVICES = {
 
 export type ServiceKey = keyof typeof SERVICES;
 
-export const TOKEN_KEYS = ["github", "vercel", "neon", "upstash", "axiom", "posthog", "sentry"] as const;
+export const TOKEN_KEYS = ["github", "vercel", "neon", "upstash", "axiom", "posthog", "sentry", "sentryCi"] as const;
 export type TokenKey = (typeof TOKEN_KEYS)[number];
 
 // Everything lives in the EU.
@@ -40,7 +40,7 @@ export const TOKEN_HELP: Record<TokenKey, { label: string; createUrl: string; no
     github: {
         label: "GitHub",
         createUrl: "https://github.com/settings/tokens",
-        note: "classic PAT with repo and read:org scopes",
+        note: "classic PAT with repo, workflow and read:org scopes; workflow is needed to push .github/workflows/ci.yml",
     },
     vercel: { label: "Vercel", createUrl: "https://vercel.com/account/settings/tokens" },
     neon: { label: "Neon", createUrl: "https://console.neon.tech/app/settings/api-keys" },
@@ -54,6 +54,11 @@ export const TOKEN_HELP: Record<TokenKey, { label: string; createUrl: string; no
     sentry: {
         label: "Sentry",
         createUrl: "https://sentry.io/settings/account/api/auth-tokens/",
-        note: "user auth token with org:read, org:write, team:read, project:read and project:write scopes; org:write lets the CLI mint a scoped org token (sntrys_) for source map upload",
+        note: "user auth token with org:read, team:read, project:read and project:write scopes",
+    },
+    sentryCi: {
+        label: "SentryCI",
+        createUrl: "https://sentry.io/orgredirect/organizations/:orgslug/settings/auth-tokens/",
+        note: "org auth token (sntrys_), created once per org in Organization Settings > Auth Tokens; becomes SENTRY_AUTH_TOKEN for source map upload. Sentry's org-auth-tokens API is session-only, so the CLI cannot create it",
     },
 };

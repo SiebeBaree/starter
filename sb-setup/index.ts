@@ -36,7 +36,9 @@ async function main(): Promise<void> {
                 "The templates hard-require those vars, so only skip this if you bring your own and set them on Vercel yourself.",
         );
     }
-    assertTokens(["github", "vercel", ...services], report);
+    // The Next.js template uploads source maps at build time, which needs the org token on top of the user token.
+    const sentryKeys = services.includes("sentry") && answers.template === "next" ? (["sentryCi"] as const) : [];
+    assertTokens(["github", "vercel", ...services, ...sentryKeys], report);
     const dest = await askDestinations(creds, services, defaults);
 
     // Merge over the previous cache so orgs of deselected services survive for the next run.

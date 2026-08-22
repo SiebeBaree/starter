@@ -4,6 +4,7 @@ import { $ } from "bun";
 import { CREDENTIALS_PATH, type Credentials } from "./config";
 import { POSTHOG_HOST, TOKEN_HELP, TOKEN_KEYS, type TokenKey } from "./constants";
 import { api, ApiError, basic, bearer } from "./http";
+import { orgTokenPayload } from "./services/sentry";
 
 // One cheap authenticated GET per service proves the token actually works, not just that it exists.
 const PROBES: Record<TokenKey, (token: string) => Promise<unknown>> = {
@@ -24,6 +25,11 @@ const PROBES: Record<TokenKey, (token: string) => Promise<unknown>> = {
     },
     posthog: (t) => api("PostHog", `${POSTHOG_HOST}/api/users/@me/`, { headers: bearer(t) }),
     sentry: (t) => api("Sentry", "https://sentry.io/api/0/organizations/", { headers: bearer(t) }),
+    sentryCi: (t) => {
+        // The org slug and region silo are baked into the token itself, releases is the cheapest org:ci endpoint.
+        const { org, regionUrl } = orgTokenPayload(t);
+        return api("Sentry", `${regionUrl}/api/0/organizations/${org}/releases/`, { headers: bearer(t) });
+    },
 };
 
 export type DoctorReport = Record<TokenKey, { ok: boolean; detail: string }>;
@@ -53,7 +59,11 @@ export async function runDoctor(creds: Credentials): Promise<DoctorReport> {
             // Org tokens only carry the CI scope (source maps, releases). Project creation, teams and
             // client keys all 403, so reject them up front instead of surfacing a bare 403 later.
             if (key === "sentry" && token.startsWith("sntrys_")) {
-                report[key] = { ok: false, detail: "org token (sntrys_), CI-only. Use a user auth token" };
+                report[key] = { ok: false, detail: "org token (sntrys_) belongs in sentryCi. Use a user auth token" };
+                return;
+            }
+            if (key === "sentryCi" && !token.startsWith("sntrys_")) {
+                report[key] = { ok: false, detail: "not an org token, expected sntrys_..." };
                 return;
             }
             try {
