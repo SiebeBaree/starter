@@ -7,7 +7,7 @@ import type { ProjectAnswers } from "./prompts/project";
 
 // Only touches the target directory and every step is safe to re-run after a failure.
 export async function scaffold(answers: ProjectAnswers, templateDir: string): Promise<void> {
-    const { dir, name, slug, apiDomain } = answers;
+    const { dir, name, slug } = answers;
 
     if (!existsSync(join(dir, "package.json"))) {
         if (existsSync(dir) && readdirSync(dir).length > 0) {
@@ -19,7 +19,6 @@ export async function scaffold(answers: ProjectAnswers, templateDir: string): Pr
     replacePlaceholders(dir, {
         "%APP_NAME%": name,
         "%SLUG_NAME%": slug,
-        ...(apiDomain && { "%DOMAIN%": apiDomain }),
     });
 
     if (!existsSync(join(dir, ".git"))) {

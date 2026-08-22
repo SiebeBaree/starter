@@ -12,6 +12,8 @@ export interface ProjectAnswers {
     slug: string;
     dir: string;
     template: TemplateKey;
+    appDomain?: string;
+    webDomain?: string;
     apiDomain?: string;
 }
 
@@ -61,19 +63,30 @@ export async function askProject(defaults: Defaults): Promise<ProjectAnswers> {
         }),
     );
 
-    let apiDomain: string | undefined;
-    if (template === "react-fastify") {
-        apiDomain = must(
-            await p.text({
-                message: "API domain (without https://)",
-                placeholder: "api.example.com",
-                validate: (value) =>
-                    /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}$/i.test(value ?? "")
-                        ? undefined
-                        : "Enter a bare domain like api.example.com",
-            }),
-        );
+    // The real domains go into APP_URL, CORS_ORIGIN and VITE_API_URL. The auto-assigned vercel.app urls are never
+    // what a project actually runs on, so the CLI asks instead of assuming <slug>.vercel.app is free and used.
+    if (template === "next") {
+        return { name, slug, dir, template, appDomain: await askDomain("App domain (without https://)") };
     }
+    return {
+        name,
+        slug,
+        dir,
+        template,
+        webDomain: await askDomain("Web domain (without https://)"),
+        apiDomain: await askDomain("API domain (without https://)", "api.example.com"),
+    };
+}
 
-    return { name, slug, dir, template, apiDomain };
+async function askDomain(message: string, placeholder = "app.example.com"): Promise<string> {
+    return must(
+        await p.text({
+            message,
+            placeholder,
+            validate: (value) =>
+                /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}$/i.test(value ?? "")
+                    ? undefined
+                    : `Enter a bare domain like ${placeholder}`,
+        }),
+    );
 }

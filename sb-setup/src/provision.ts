@@ -33,7 +33,7 @@ function need<T>(value: T | undefined, what: string): T {
 // so a failed run can be re-run with the same answers and resumes where it stopped.
 export async function provision(input: ProvisionInput): Promise<string[]> {
     const { creds, answers, services, dest } = input;
-    const { name, slug, dir, template, apiDomain } = answers;
+    const { slug, dir, template, appDomain, webDomain, apiDomain } = answers;
     const has = (service: ServiceKey) => services.includes(service);
     const summary: string[] = [];
 
@@ -96,8 +96,10 @@ export async function provision(input: ProvisionInput): Promise<string[]> {
 
     let posthogKey: string | undefined;
     if (has("posthog")) {
+        // Keyed on the slug like every other service, so a display name edit in the PostHog UI cannot break the
+        // find-before-create idempotency on a re-run.
         const project = await withSpinner("Provisioning PostHog project", () =>
-            posthog.ensureProject(requireToken(creds, "posthog"), need(dest.posthogOrgId, "PostHog org"), name),
+            posthog.ensureProject(requireToken(creds, "posthog"), need(dest.posthogOrgId, "PostHog org"), slug),
         );
         posthogKey = project.apiKey;
     }
@@ -142,7 +144,7 @@ export async function provision(input: ProvisionInput): Promise<string[]> {
                 repo: repo.full_name,
             }),
         );
-        const prodUrl = `https://${slug}.vercel.app`;
+        const prodUrl = `https://${need(appDomain, "app domain")}`;
         const envs: vercel.EnvVar[] = [{ key: "APP_URL", value: prodUrl }];
         if (databaseUrl) envs.push({ key: "DATABASE_URL", value: databaseUrl });
         if (redis) {
@@ -159,19 +161,32 @@ export async function provision(input: ProvisionInput): Promise<string[]> {
         }
         if (posthogKey) envs.push({ key: "NEXT_PUBLIC_POSTHOG_KEY", value: posthogKey });
         if (appDsn) {
+            // Source map upload at build time gets its own scoped org token instead of the personal user token,
+            // which would hand full account access to anyone who can read the project env.
+            const orgToken = await withSpinner("Creating Sentry org token", () =>
+                sentry.ensureOrgToken(
+                    requireToken(creds, "sentry"),
+                    need(dest.sentryRegionUrl, "Sentry region"),
+                    need(dest.sentryOrg, "Sentry org"),
+                    slug,
+                ),
+            );
             envs.push(
                 { key: "NEXT_PUBLIC_SENTRY_DSN", value: appDsn },
-                // Source map upload at build time runs on the same personal auth token.
                 { key: "SENTRY_ORG", value: need(dest.sentryOrg, "Sentry org") },
                 { key: "SENTRY_PROJECT", value: slug },
-                { key: "SENTRY_AUTH_TOKEN", value: requireToken(creds, "sentry") },
+                { key: "SENTRY_AUTH_TOKEN", value: orgToken },
             );
         }
         await withSpinner("Setting Vercel env vars", () => vercel.upsertEnv(vercelToken, teamId, project.id, envs));
         const deploymentUrl = await withSpinner("Deploying to Vercel", () =>
             vercel.deployFromGit(vercelToken, teamId, slug, repo.id),
         );
-        summary.push(`App: ${prodUrl}`, `Deployment: ${deploymentUrl}`);
+        summary.push(
+            `App: ${prodUrl}`,
+            `Deployment: ${deploymentUrl}`,
+            `Attach ${need(appDomain, "app domain")} to the ${slug} Vercel project, APP_URL already points at it`,
+        );
     } else {
         const webName = `${slug}-web`;
         const apiName = `${slug}-api`;
@@ -193,7 +208,7 @@ export async function provision(input: ProvisionInput): Promise<string[]> {
             }),
         );
 
-        const webUrl = `https://${webName}.vercel.app`;
+        const webUrl = `https://${need(webDomain, "web domain")}`;
         const domain = need(apiDomain, "API domain");
         const apiEnvs: vercel.EnvVar[] = [{ key: "CORS_ORIGIN", value: webUrl }];
         if (databaseUrl) apiEnvs.push({ key: "DATABASE_URL", value: databaseUrl });
@@ -221,9 +236,9 @@ export async function provision(input: ProvisionInput): Promise<string[]> {
         );
         summary.push(
             `Web: ${webUrl} (deployment ${webDeployment})`,
-            `API: https://${apiName}.vercel.app (deployment ${apiDeployment})`,
-            `Attach ${domain} to the ${apiName} Vercel project, the web bundle and CSP already point at it`,
-            `CORS_ORIGIN is ${webUrl}, update it when the web app gets its real domain`,
+            `API: https://${domain} (deployment ${apiDeployment})`,
+            `Attach ${need(webDomain, "web domain")} to ${webName} and ${domain} to ${apiName} on Vercel,`,
+            `CORS_ORIGIN and the web bundle (VITE_API_URL and its CSP) already point at them`,
         );
     }
 

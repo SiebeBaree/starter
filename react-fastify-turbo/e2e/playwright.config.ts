@@ -9,7 +9,7 @@ type WebServer = Extract<NonNullable<PlaywrightTestConfig["webServer"]>, unknown
 // skips itself without it, the smoke spec runs either way.
 const servers: WebServer[] = [
     {
-        command: `pnpm --filter web build && pnpm --filter web preview -- --port ${WEB_PORT} --strictPort`,
+        command: `pnpm --filter web build && pnpm --filter web preview --port ${WEB_PORT} --strictPort`,
         url: `http://localhost:${WEB_PORT}`,
         reuseExistingServer: !process.env.CI,
         timeout: 180_000,

@@ -27,6 +27,15 @@ async function main(): Promise<void> {
 
     const answers = await askProject(defaults);
     const services = await askServices(defaults);
+    // Both templates require DATABASE_URL at boot and the Upstash vars in production, so skipping these two does
+    // not produce a leaner deploy, it produces one that fails env validation until the vars are set by hand.
+    const required = (["neon", "upstash"] as const).filter((service) => !services.includes(service));
+    if (required.length > 0) {
+        p.log.warn(
+            `Without ${required.map((s) => SERVICES[s]).join(" and ")} the deploy fails env validation. ` +
+                "The templates hard-require those vars, so only skip this if you bring your own and set them on Vercel yourself.",
+        );
+    }
     assertTokens(["github", "vercel", ...services], report);
     const dest = await askDestinations(creds, services, defaults);
 

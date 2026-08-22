@@ -66,7 +66,7 @@ The CLI copies templates straight from this repo's checkout on disk, so there is
 
 3. Run `sb-setup`. The doctor walks you through the tokens on first run.
 
-You'll need Bun, pnpm and git. Templates use `%APP_NAME%`, `%SLUG_NAME%` and `%DOMAIN%` as placeholders, so if you edit them, keep those intact.
+You'll need Bun, pnpm and git. Templates use `%APP_NAME%` and `%SLUG_NAME%` as placeholders, so if you edit them, keep those intact.
 
 ## License
 

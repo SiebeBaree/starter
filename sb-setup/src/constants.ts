@@ -54,6 +54,6 @@ export const TOKEN_HELP: Record<TokenKey, { label: string; createUrl: string; no
     sentry: {
         label: "Sentry",
         createUrl: "https://sentry.io/settings/account/api/auth-tokens/",
-        note: "user auth token with org:read, team:read, project:read and project:write scopes; org tokens (sntrys_) are CI-only",
+        note: "user auth token with org:read, org:write, team:read, project:read and project:write scopes; org:write lets the CLI mint a scoped org token (sntrys_) for source map upload",
     },
 };

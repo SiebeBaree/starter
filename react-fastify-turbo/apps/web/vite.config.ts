@@ -4,6 +4,11 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
     plugins: [reactRouter(), tailwindcss()],
+    // Vercel exposes VERCEL_ENV without the VITE_ prefix, so Vite never inlines it on its own. Observability uses it
+    // to tell preview deploys apart from production; unset (local builds) it resolves to undefined, not a string.
+    define: {
+        "import.meta.env.VITE_VERCEL_ENV": JSON.stringify(process.env.VERCEL_ENV) ?? "undefined",
+    },
     resolve: {
         alias: { "@": new URL("./src", import.meta.url).pathname },
     },

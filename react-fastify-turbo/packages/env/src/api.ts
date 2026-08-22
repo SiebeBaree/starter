@@ -3,6 +3,15 @@ import { z } from "zod";
 
 const isProd = process.env.NODE_ENV === "production";
 
+// CORS_ORIGIN is a comma-separated allowlist, so plain z.url() would reject a second entry. Entries are trimmed
+// where they are consumed (the security plugin), the schema only guarantees every entry is a real url.
+const originList = z
+    .string()
+    .refine(
+        (value) => value.split(",").every((origin) => z.url().safeParse(origin.trim()).success),
+        "Expected a comma-separated list of origins",
+    );
+
 /**
  * Api environment.
  *
@@ -19,7 +28,7 @@ export const env = createEnv({
     server: {
         DATABASE_URL: z.url(),
         PORT: z.coerce.number().int().positive().default(3001),
-        CORS_ORIGIN: isProd ? z.url() : z.url().default("http://localhost:5173"),
+        CORS_ORIGIN: isProd ? originList : originList.default("http://localhost:5173"),
         UPSTASH_REDIS_REST_URL: isProd ? z.url() : z.url().optional(),
         UPSTASH_REDIS_REST_TOKEN: isProd ? z.string().min(1) : z.string().min(1).optional(),
         SENTRY_DSN: z.url().optional(),

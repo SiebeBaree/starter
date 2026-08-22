@@ -34,6 +34,25 @@ export function teams(token: string, regionUrl: string, org: string): Promise<{ 
     });
 }
 
+// Org auth tokens (sntrys_) are the CI-safe kind: scoped to source map upload and release creation, no account
+// access. The token value is only returned at creation, so a re-run rotates the token instead of reusing it; the
+// fresh value is re-uploaded to Vercel right after. Needs org:write on the user token.
+export async function ensureOrgToken(token: string, regionUrl: string, org: string, name: string): Promise<string> {
+    const base = `${regionUrl}/api/0/organizations/${org}/org-auth-tokens/`;
+    const existing = await api<{ id: string; name: string }[]>(SERVICE, base, { headers: bearer(token) });
+    await Promise.all(
+        existing
+            .filter((t) => t.name === name)
+            .map((stale) => api(SERVICE, `${base}${stale.id}/`, { method: "DELETE", headers: bearer(token) })),
+    );
+    const created = await api<{ token: string }>(SERVICE, base, {
+        method: "POST",
+        headers: bearer(token),
+        body: { name },
+    });
+    return created.token;
+}
+
 export async function ensureProject(
     token: string,
     regionUrl: string,

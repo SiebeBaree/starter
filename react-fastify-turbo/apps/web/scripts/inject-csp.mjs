@@ -34,8 +34,9 @@ const policy = [
     `style-src 'self' ${styleHashes.join(" ")}`,
     "img-src 'self' data:",
     "font-src 'self'",
-    // The api is cross-origin by design; replace the placeholder with the real api origin at deploy time.
-    "connect-src 'self' https://%DOMAIN%",
+    // The api is cross-origin by design. The build inlines VITE_API_URL into the bundle, so the policy derives the
+    // allowed connect origin from the same variable; the fallback mirrors the dev default in @repo/env/web.
+    `connect-src 'self' ${new URL(process.env.VITE_API_URL ?? "http://localhost:3001").origin}`,
     // PostHog session replay compresses recordings in a blob worker.
     "worker-src 'self' blob:",
     "object-src 'none'",
